@@ -7,15 +7,15 @@ import (
 )
 
 // Run starts the PostgreSQL reverse proxy server.
-func Run(port int) error {
-	fmt.Printf("Hello world; port=%d\n", port)
+func Run(c Config) error {
+	fmt.Printf("Hello world; port=%d\n", c.Port)
 	return nil
 }
 
 // Execute runs the PostgreSQL reverse proxy server as a command line (CLI)
 // application.
 func Execute() error {
-	port := 5397
+	c := Config{}
 	cmd := &cobra.Command{
 		Use:           "postgresql-schema-router",
 		Short:         "PostgreSQL Reverse Proxy",
@@ -23,14 +23,14 @@ func Execute() error {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return Run(port)
+			return Run(c)
 		},
 	}
 
 	cmd.PersistentFlags().IntVar(
-		&port,
+		&c.Port,
 		"port",
-		5397,
+		DefaultPort,
 		"The port where the proxy should expose the server",
 	)
 
