@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/auxten/postgresql-parser/pkg/sql/parser"
+	"github.com/jackc/pgproto3/v2"
+
 	"github.com/dhermes/postgresql-schema-router/postgres"
 )
 
@@ -141,5 +144,12 @@ func inspectPG(chunk []byte) {
 		return
 	}
 
-	fmt.Printf("FrontendMessage: %#v\n", fm)
+	q, ok := fm.(*pgproto3.Query)
+	if ok {
+		fmt.Printf("Query: %#v\n", q.String)
+		s, _ := parser.Parse(q.String)
+		fmt.Printf("Statements: %#v\n", s)
+	} else {
+		fmt.Printf("FrontendMessage: %#v\n", fm)
+	}
 }
