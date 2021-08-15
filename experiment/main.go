@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/auxten/postgresql-parser/pkg/sql/parser"
+	"github.com/auxten/postgresql-parser/pkg/sql/sem/tree"
 )
 
 const (
@@ -36,7 +37,42 @@ func run() error {
 	}
 
 	statement := statements[0]
-	fmt.Printf("Statement: %#v\n", statement)
+	select_, ok := statement.AST.(*tree.Select)
+	if !ok || select_ == nil {
+		return errors.New("expected AST to be a SELECT statement")
+	}
+	clause, ok := select_.Select.(*tree.SelectClause)
+	if !ok || clause == nil {
+		return errors.New("expected SELECT clause")
+	}
+	tables := clause.From.Tables
+	if len(tables) != 1 {
+		return errors.New("expected exactly 1 table")
+	}
+	table, ok := tables[0].(*tree.JoinTableExpr)
+	if !ok || table == nil {
+		return errors.New("expected JOIN table expression")
+	}
+	//
+	left, ok := table.Left.(*tree.AliasedTableExpr)
+	if !ok || left == nil {
+		return errors.New("expected left table as aliased expression")
+	}
+	right, ok := table.Right.(*tree.AliasedTableExpr)
+	if !ok || right == nil {
+		return errors.New("expected right table as aliased expression")
+	}
+	//
+	leftName, ok := left.Expr.(*tree.TableName)
+	if !ok || leftName == nil {
+		return errors.New("expected left table name")
+	}
+	rightName, ok := left.Expr.(*tree.TableName)
+	if !ok || rightName == nil {
+		return errors.New("expected left table name")
+	}
+	fmt.Printf(" left: %s\n", leftName.FQString())
+	fmt.Printf("right: %s\n", rightName.FQString())
 
 	return nil
 }
