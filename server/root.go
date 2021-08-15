@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/spf13/cobra"
 )
@@ -13,8 +14,27 @@ func Run(c Config) error {
 		return err
 	}
 
-	fmt.Printf("Hello world; port=%d; remote=%q\n", c.ProxyPort, c.RemoteAddr)
-	return nil
+	proxyAddr := fmt.Sprintf("localhost:%d", c.ProxyPort)
+	addr, err := net.ResolveTCPAddr("tcp", proxyAddr)
+	if err != nil {
+		return err
+	}
+
+	// LOG-TODO: Setting up TCP proxy on %s\n", proxyAddr)
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	for {
+		tc, err := listener.AcceptTCP()
+		if err != nil {
+			return err
+		}
+
+		// TODO: Use a channel here and a fixed set of goroutines to handle it
+		go proxy(tc, c)
+	}
 }
 
 // Execute runs the PostgreSQL reverse proxy server as a command line (CLI)
