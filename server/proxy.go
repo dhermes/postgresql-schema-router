@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"sync"
 	"time"
+
+	"github.com/dhermes/postgresql-schema-router/postgres"
 )
 
 const (
@@ -37,7 +40,9 @@ func (fs *forwardState) MarkDone() {
 	fs.Done = true
 }
 
-func forward(wg *sync.WaitGroup, r, w *net.TCPConn, fs *forwardState) {
+type packetInspector func(data []byte)
+
+func forward(wg *sync.WaitGroup, r, w *net.TCPConn, fs *forwardState, pi packetInspector) {
 	defer wg.Done()
 
 	data := make([]byte, 65536)
@@ -69,6 +74,10 @@ func forward(wg *sync.WaitGroup, r, w *net.TCPConn, fs *forwardState) {
 		if n >= 65536 {
 			fs.AddError(fmt.Errorf("%w, exceeds 65536 bytes", ErrPacketTooLarge))
 			return
+		}
+
+		if pi != nil {
+			pi(data[:n])
 		}
 
 		_, err = w.Write(data[:n])
@@ -103,8 +112,8 @@ func proxyInternal(tc *net.TCPConn, c Config) (err error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	fs := forwardState{}
-	go forward(&wg, tc, sc, &fs)
-	go forward(&wg, sc, tc, &fs)
+	go forward(&wg, tc, sc, &fs, inspectPG) // Client->Proxy->Remote
+	go forward(&wg, sc, tc, &fs, nil)       // Remote->Proxy->Client
 	wg.Wait()
 
 	err = appendErrs(fs.Errors...)
@@ -119,4 +128,18 @@ func proxy(tc *net.TCPConn, c Config) {
 		return
 	}
 	// LOG-TODO: Do something with the error
+}
+
+func inspectPG(chunk []byte) {
+	fm, err := postgres.ParseChunk(chunk)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"Failed to parse TCP chunk as PostgreSQL frontend message; %v",
+			err,
+		)
+		return
+	}
+
+	fmt.Printf("FrontendMessage: %#v\n", fm)
 }
