@@ -11,6 +11,9 @@ var (
 	// ErrInvalidConfiguration is the error returned when a `Config` fails
 	// validation.
 	ErrInvalidConfiguration = errors.New("invalid configuration")
+	// ErrPacketTooLarge is the error returned when a TCP packet from a read
+	// is too large.
+	ErrPacketTooLarge = errors.New("packet too large")
 )
 
 func appendErrs(errs ...error) error {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -39,7 +40,7 @@ func (fs *forwardState) MarkDone() {
 func forward(wg *sync.WaitGroup, r, w *net.TCPConn, fs *forwardState) {
 	defer wg.Done()
 
-	data := make([]byte, 4096)
+	data := make([]byte, 65536)
 	for {
 		if fs.IsDone() {
 			return
@@ -62,6 +63,11 @@ func forward(wg *sync.WaitGroup, r, w *net.TCPConn, fs *forwardState) {
 				continue
 			}
 			fs.AddError(err)
+			return
+		}
+		// Ensure we have read a "complete" TCP packet, with a limit on the size.
+		if n >= 65536 {
+			fs.AddError(fmt.Errorf("%w, exceeds 65536 bytes", ErrPacketTooLarge))
 			return
 		}
 
