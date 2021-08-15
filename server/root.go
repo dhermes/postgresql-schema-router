@@ -8,7 +8,12 @@ import (
 
 // Run starts the PostgreSQL reverse proxy server.
 func Run(c Config) error {
-	fmt.Printf("Hello world; port=%d\n", c.Port)
+	err := c.Validate()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Hello world; port=%d; remote=%q\n", c.ProxyPort, c.RemoteAddr)
 	return nil
 }
 
@@ -28,10 +33,16 @@ func Execute() error {
 	}
 
 	cmd.PersistentFlags().IntVar(
-		&c.Port,
+		&c.ProxyPort,
 		"port",
-		DefaultPort,
+		DefaultProxyPort,
 		"The port where the proxy should expose the server",
+	)
+	cmd.PersistentFlags().StringVar(
+		&c.RemoteAddr,
+		"remote",
+		"",
+		"The remote address  where the proxy should forward traffic (e.g. localhost:22089)",
 	)
 
 	return cmd.Execute()
