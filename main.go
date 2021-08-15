@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	err := server.Run()
+	err := server.Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
