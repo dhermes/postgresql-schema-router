@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"runtime"
@@ -34,6 +35,17 @@ func (b *B) Read(p []byte) (int, error) {
 	*b = newS
 
 	return m, nil
+}
+
+func (b *B) Peek(n int) ([]byte, error) {
+	s := *b
+	if n > len(s) {
+		return s, bufio.ErrBufferFull
+	}
+	if n < 0 {
+		return nil, bufio.ErrNegativeCount
+	}
+	return s[:n], nil
 }
 
 func (b *B) Write(p []byte) (int, error) {
