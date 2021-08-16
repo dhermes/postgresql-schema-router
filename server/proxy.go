@@ -145,13 +145,22 @@ func inspectFrontendMessage(chunk []byte) {
 	}
 
 	q, ok := fm.(*pgproto3.Query)
-	if ok {
-		fmt.Printf("Query: %#v\n", q.String)
-		s, _ := parser.Parse(q.String)
-		fmt.Printf("Statements: %#v\n", s)
-	} else {
+	if !ok {
 		fmt.Printf("FrontendMessage: %#v\n", fm)
+		return
 	}
+
+	statements, err := parser.Parse(q.String)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"Failed to parse SQL from PostgreSQL Query; %v",
+			err,
+		)
+		return
+	}
+
+	fmt.Printf("Query Statements: %#v\n", statements)
 }
 
 func inspectBackendMessage(chunk []byte) {
