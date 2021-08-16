@@ -8,8 +8,10 @@ import (
 
 // NOTE: Ensure that
 //       - `B` satisfies `io.Reader`
+//       - `B` satisfies `io.Writer`
 var (
 	_ io.Reader = (*B)(nil)
+	_ io.Writer = (*B)(nil)
 )
 
 type B []byte
@@ -32,6 +34,11 @@ func (b *B) Read(p []byte) (int, error) {
 	*b = newS
 
 	return m, nil
+}
+
+func (b *B) Write(p []byte) (int, error) {
+	*b = append(*b, p...)
+	return len(p), nil
 }
 
 func (b *B) Len() int {
@@ -87,6 +94,15 @@ func main() {
 	h2 = ms.HeapAlloc
 	t2 = ms.TotalAlloc
 	fmt.Printf("4: \u0394 Alloc = %+d; \u0394 HeapAlloc = %+d; \u0394 TotalAlloc = %+d\n", diff(a2, a1), diff(h2, h1), diff(t2, t1))
+	b.Write([]byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse ci..."))
+	fmt.Printf("len(b) = %d; cap(b) = %d\n", b.Len(), b.Cap())
+
+	runtime.GC()
+	runtime.ReadMemStats(&ms)
+	a1 = ms.Alloc
+	h1 = ms.HeapAlloc
+	t1 = ms.TotalAlloc
+	fmt.Printf("5: \u0394 Alloc = %+d; \u0394 HeapAlloc = %+d; \u0394 TotalAlloc = %+d\n", -diff(a2, a1), -diff(h2, h1), -diff(t2, t1))
 }
 
 func diff(u1, u2 uint64) int64 {
