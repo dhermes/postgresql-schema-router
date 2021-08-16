@@ -146,7 +146,7 @@ func inspectFrontendMessage(chunk []byte) {
 
 	q, ok := fm.(*pgproto3.Query)
 	if !ok {
-		fmt.Printf("FrontendMessage: %T\n", fm)
+		fmt.Printf("FrontendMessage: %T [%d]\n", fm, len(chunk))
 		return
 	}
 
@@ -160,7 +160,7 @@ func inspectFrontendMessage(chunk []byte) {
 		return
 	}
 
-	fmt.Printf("Query Statements: %#v\n", statements)
+	fmt.Printf("Query Statements [%d]: %#v\n", len(chunk), statements)
 }
 
 func inspectBackendMessage(chunk []byte) {
@@ -174,5 +174,5 @@ func inspectBackendMessage(chunk []byte) {
 		return
 	}
 
-	fmt.Printf("BackendMessage: %s\n", description)
+	fmt.Printf("BackendMessage: %s [%d]\n", description, len(chunk))
 }

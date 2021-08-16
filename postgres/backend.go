@@ -38,7 +38,7 @@ func DescribeBackendMessage(chunk []byte) (string, error) {
 		// - AuthenticationSASL
 		// - AuthenticationSASLContinue
 		// - AuthenticationSASLFinal
-		return "Authentication*", nil
+		return "Authentication{*}", nil
 	case 'K':
 		return "BackendKeyData", nil
 	case '2':
