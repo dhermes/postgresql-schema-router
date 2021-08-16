@@ -146,7 +146,7 @@ func inspectFrontendMessage(chunk []byte) {
 
 	q, ok := fm.(*pgproto3.Query)
 	if !ok {
-		fmt.Printf("FrontendMessage: %#v\n", fm)
+		fmt.Printf("FrontendMessage: %T\n", fm)
 		return
 	}
 
