@@ -12,41 +12,40 @@ var (
 	_ io.Reader = (*B)(nil)
 )
 
-type B struct {
-	s []byte
-}
+type B []byte
 
-func NewB(s []byte) *B {
-	return &B{s: s}
+func NewB(s []byte) B {
+	return B(s)
 }
 
 func (b *B) Read(p []byte) (int, error) {
-	m := intMin(len(p), len(b.s))
+	s := *b
+	m := intMin(len(p), len(s))
 	if m == 0 {
 		return 0, nil
 	}
-	copy(p[:m], b.s[:m])
+	copy(p[:m], s[:m])
 
-	// Free the memory in `B.s` that was just consumed.
-	newS := make([]byte, len(b.s)-m)
-	copy(newS, b.s[m:])
-	b.s = newS
+	// Free the memory in `b` that was just consumed.
+	newS := make([]byte, len(s)-m)
+	copy(newS, s[m:])
+	*b = newS
 
 	return m, nil
 }
 
 func (b *B) Len() int {
-	return len(b.s)
+	return len(*b)
 }
 
 func (b *B) Cap() int {
-	return cap(b.s)
+	return cap(*b)
 }
 
 func main() {
 	var a1, h1, t1, a2, h2, t2 uint64
 	ms := runtime.MemStats{}
-	var b *B
+	var b B
 
 	runtime.GC()
 	runtime.ReadMemStats(&ms)
