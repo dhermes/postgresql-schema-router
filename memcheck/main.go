@@ -37,6 +37,22 @@ func (b *B) Read(p []byte) (int, error) {
 	return m, nil
 }
 
+func (b *B) Discard(n int) error {
+	s := *b
+	if n > len(s) {
+		return bufio.ErrBufferFull
+	}
+	if n < 0 {
+		return bufio.ErrNegativeCount
+	}
+
+	// Free the memory in `b` that was just consumed.
+	newS := make([]byte, len(s)-n)
+	copy(newS, s[n:])
+	*b = newS
+	return nil
+}
+
 func (b *B) Peek(n int) ([]byte, error) {
 	s := *b
 	if n > len(s) {
@@ -88,7 +104,7 @@ func main() {
 	h2 = ms.HeapAlloc
 	t2 = ms.TotalAlloc
 	fmt.Printf("2: \u0394 Alloc = %+d; \u0394 HeapAlloc = %+d; \u0394 TotalAlloc = %+d\n", diff(a2, a1), diff(h2, h1), diff(t2, t1))
-	b.Read(make([]byte, 0xc000))
+	b.Discard(0xc000)
 	fmt.Printf("len(b) = %d; cap(b) = %d\n", b.Len(), b.Cap())
 
 	runtime.GC()
@@ -97,7 +113,7 @@ func main() {
 	h1 = ms.HeapAlloc
 	t1 = ms.TotalAlloc
 	fmt.Printf("3: \u0394 Alloc = %+d; \u0394 HeapAlloc = %+d; \u0394 TotalAlloc = %+d\n", -diff(a2, a1), -diff(h2, h1), -diff(t2, t1))
-	b.Read(make([]byte, 0x3f00))
+	b.Discard(0x3f00)
 	fmt.Printf("len(b) = %d; cap(b) = %d\n", b.Len(), b.Cap())
 
 	runtime.GC()
