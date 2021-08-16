@@ -115,8 +115,8 @@ func proxyInternal(tc *net.TCPConn, c Config) (err error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	fs := forwardState{}
-	go forward(&wg, tc, sc, &fs, inspectPG) // Client->Proxy->Remote
-	go forward(&wg, sc, tc, &fs, nil)       // Remote->Proxy->Client
+	go forward(&wg, tc, sc, &fs, inspectFrontendMessage) // Client->Proxy->Remote
+	go forward(&wg, sc, tc, &fs, inspectBackendMessage)  // Remote->Proxy->Client
 	wg.Wait()
 
 	err = appendErrs(fs.Errors...)
@@ -133,7 +133,7 @@ func proxy(tc *net.TCPConn, c Config) {
 	// LOG-TODO: Do something with the error
 }
 
-func inspectPG(chunk []byte) {
+func inspectFrontendMessage(chunk []byte) {
 	fm, err := postgres.ParseChunk(chunk)
 	if err != nil {
 		fmt.Fprintf(
@@ -152,4 +152,18 @@ func inspectPG(chunk []byte) {
 	} else {
 		fmt.Printf("FrontendMessage: %#v\n", fm)
 	}
+}
+
+func inspectBackendMessage(chunk []byte) {
+	description, err := postgres.DescribeBackendMessage(chunk)
+	if err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"Failed to parse TCP chunk as PostgreSQL frontend message; %v",
+			err,
+		)
+		return
+	}
+
+	fmt.Printf("BackendMessage: %s\n", description)
 }

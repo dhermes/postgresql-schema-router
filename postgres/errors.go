@@ -22,4 +22,7 @@ var (
 	// ErrParsingClientMessage indicates a failure occurred when parsing a TCP
 	// packet as a PostgreSQL client message.
 	ErrParsingClientMessage = errors.New("failed to parse TCP packet as PostgesSQL client message")
+	// ErrParsingServerMessage indicates a failure occurred when parsing a TCP
+	// packet as a PostgreSQL server message.
+	ErrParsingServerMessage = errors.New("failed to parse TCP packet as PostgesSQL server message")
 )
